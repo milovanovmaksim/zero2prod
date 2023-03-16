@@ -1,3 +1,5 @@
+use unicode_segmentation::UnicodeSegmentation;
+
 pub struct SubscriberName(String);
 
 
