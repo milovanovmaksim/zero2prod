@@ -42,12 +42,11 @@ impl TestApp {
             .body(body)
             .send()
             .await
-            .expect("Failed to execute request.")
+            .expect("Failed to execute request")
     }
 
     pub fn get_confirmation_links(&self, email_request: &wiremock::Request) -> ConfirmationLinks {
         let body: serde_json::Value = serde_json::from_slice(&email_request.body).unwrap();
-
         let get_link = |s: &str| {
             let links: Vec<_> = linkify::LinkFinder::new()
                 .links(s)
@@ -82,10 +81,9 @@ pub async fn spawn_app() -> TestApp {
     let application = Application::build(configuration.clone())
         .await.expect("Failed to build application.");
     let application_port = application.port();
-    let address = format!("http://127.0.0.1:{}", application_port);
     let _ = tokio::spawn(application.run_until_stopped());
     TestApp {
-        address,
+        address: format!("http://localhost:{}", application_port),
         port: application_port,
         db_pool: get_connection_pool(&configuration.database),
         email_server
