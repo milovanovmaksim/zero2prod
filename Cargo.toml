@@ -33,7 +33,7 @@ unicode-segmentation = "1.10.1"
 validator = "0.16.0"
 fake = "2.5.0"
 rand = { version = "0.8.5", features=["std_rng"] }
-
+thiserror = "1.0.40"
 
 [dev-dependencies]
 tokio = { version = "1.26.0", features = ["rt", "macros"] }
