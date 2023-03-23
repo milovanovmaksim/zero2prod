@@ -23,7 +23,6 @@ struct ConfirmedSubscriber {
 }
 
 
-
 pub async fn publish_newsletter(
     body: web::Json<BodyData>,
     pool: web::Data<PgPool>,
@@ -35,7 +34,7 @@ pub async fn publish_newsletter(
             Ok(subscriber) => {
                 email_client
                     .send_email(
-                        subscriber.email,
+                        &subscriber.email,
                         &body.title,
                         &body.content.html,
                         &body.content.text,
@@ -46,7 +45,7 @@ pub async fn publish_newsletter(
                             "Failed to send newsletter issue to {}",
                             subscriber.email
                         )
-                    });
+                    })?;
             }
             Err(error) => {
                 tracing::warn!(
@@ -63,11 +62,7 @@ pub async fn publish_newsletter(
 
 #[tracing::instrument(name = "Get confirmed subscribers", skip(pool))]
 async fn get_confirmed_subscribers(pool: &PgPool) -> Result<Vec<Result<ConfirmedSubscriber, anyhow::Error>>, anyhow::Error> {
-    struct Row {
-        email: String,
-    }
-    let rows = sqlx::query_as!(
-        Row,
+    let confirmed_subscribers = sqlx::query!(
         r#"
             SELECT email
             FROM subscriptions
@@ -75,13 +70,12 @@ async fn get_confirmed_subscribers(pool: &PgPool) -> Result<Vec<Result<Confirmed
         "#,
     )
     .fetch_all(pool)
-    .await?;
-    let confirmed_subscribers = rows
-        .into_iter()
-        .map(|r| match SubscriberEmail::parse(r.email) {
-            Ok(email) => Ok(ConfirmedSubscriber { email }),
-            Err(error) => Err(anyhow::anyhow!(error)),
-        }).collect();
+    .await?
+    .into_iter()
+    .map(|r| match SubscriberEmail::parse(r.email) {
+        Ok(email) => Ok(ConfirmedSubscriber { email }),
+        Err(error) => Err(anyhow::anyhow!(error)),
+    }).collect();
     Ok(confirmed_subscribers)
 
 }

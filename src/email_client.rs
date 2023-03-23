@@ -30,7 +30,7 @@ impl EmailClient {
 
     pub async fn send_email(
         &self,
-        recipient: SubscriberEmail,
+        recipient: &SubscriberEmail,
         subject: &str,
         html_content: &str,
         text_content: &str
@@ -121,7 +121,7 @@ mod tests {
             .expect(1)
             .mount(&mock_server)
             .await;
-        let _ = email_client.send_email(email(),
+        let _ = email_client.send_email(&email(),
             &subject(), &content(), &content()).await;
     }
 
@@ -135,7 +135,7 @@ mod tests {
             .mount(&mock_server)
             .await;
         let outcome = email_client
-            .send_email(email(), &subject(), &content(), &content())
+            .send_email(&email(), &subject(), &content(), &content())
             .await;
         assert_eq!(outcome.ok(), Some(()));
     }
@@ -150,7 +150,7 @@ mod tests {
             .mount(&mock_server)
             .await;
         let outcome = email_client
-            .send_email(email(), &subject(), &content(), &content())
+            .send_email(&email(), &subject(), &content(), &content())
             .await;
 
         assert_eq!(outcome.unwrap_err().status(), Some(StatusCode::INTERNAL_SERVER_ERROR));
@@ -168,7 +168,7 @@ mod tests {
             .mount(&mock_server)
             .await;
         let outcome = email_client
-            .send_email(email(), &subject(), &content(), &content())
+            .send_email(&email(), &subject(), &content(), &content())
             .await;
         let res = outcome.unwrap_err();
         assert!(res.is_timeout());
