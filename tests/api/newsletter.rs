@@ -110,7 +110,7 @@ async fn create_confirmed_subscriber(app: &TestApp) {
 }
 
 #[tokio::test]
-async fn requests_missaing_authorization_are_rejected() {
+async fn requests_missing_authorization_are_rejected() {
     let app = spawn_app().await;
     let response = reqwest::Client::new()
         .post(&format!("{}/newsletters", &app.address))
