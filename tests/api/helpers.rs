@@ -1,12 +1,11 @@
-use sqlx::{PgPool, PgConnection, Executor, Connection};
-use uuid::Uuid;
 use once_cell::sync::Lazy;
+use sqlx::{Connection, Executor, PgConnection, PgPool};
+use uuid::Uuid;
 
 use wiremock::MockServer;
+use zero2prod::configuration::{get_configuration, DatabaseSettings};
 use zero2prod::startup::{get_connection_pool, Application};
 use zero2prod::telemetry::{get_subscriber, init_subscriber};
-use zero2prod::configuration::{get_configuration, DatabaseSettings};
-
 
 static TRACING: Lazy<()> = Lazy::new(|| {
     let default_filter_level = "info".to_string();
@@ -20,12 +19,10 @@ static TRACING: Lazy<()> = Lazy::new(|| {
     };
 });
 
-
 pub struct ConfirmationLinks {
     pub html: reqwest::Url,
-    pub plain_text: reqwest::Url
+    pub plain_text: reqwest::Url,
 }
-
 
 pub struct TestApp {
     pub address: String,
@@ -35,7 +32,7 @@ pub struct TestApp {
 }
 
 impl TestApp {
-    pub async fn  post_subscriptions(&self, body: String) -> reqwest::Response {
+    pub async fn post_subscriptions(&self, body: String) -> reqwest::Response {
         reqwest::Client::new()
             .post(&format!("{}/subscriptions", &self.address))
             .header("Content-Type", "application/x-www-form-urlencoded")
@@ -67,6 +64,7 @@ impl TestApp {
     pub async fn post_newsletters(&self, body: serde_json::Value) -> reqwest::Response {
         reqwest::Client::new()
             .post(&format!("{}/newsletters", &self.address))
+            .basic_auth(Uuid::new_v4().to_string(), Some(Uuid::new_v4().to_string()))
             .json(&body)
             .send()
             .await
@@ -86,16 +84,16 @@ pub async fn spawn_app() -> TestApp {
     };
     configure_database(&configuration.database).await;
     let application = Application::build(configuration.clone())
-        .await.expect("Failed to build application.");
+        .await
+        .expect("Failed to build application.");
     let application_port = application.port();
     let _ = tokio::spawn(application.run_until_stopped());
     TestApp {
         address: format!("http://localhost:{}", application_port),
         port: application_port,
         db_pool: get_connection_pool(&configuration.database),
-        email_server
+        email_server,
     }
-
 }
 
 pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
@@ -115,3 +113,4 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .expect("Failed to migrate the database");
     connection_pool
 }
+

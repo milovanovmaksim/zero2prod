@@ -35,6 +35,9 @@ fake = "2.5.0"
 rand = { version = "0.8.5", features=["std_rng"] }
 thiserror = "1.0.40"
 anyhow = "1.0.70"
+base64 = "0.13"
+
+
 
 [dev-dependencies]
 tokio = { version = "1.26.0", features = ["rt", "macros"] }

@@ -17,7 +17,7 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
 }
 
 #[tokio::test]
-async fn  subscribe_persists_the_new_subscriber() {
+async fn subscribe_persists_the_new_subscriber() {
     let app = spawn_app().await;
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
     Mock::given(path("/email"))
@@ -37,14 +37,13 @@ async fn  subscribe_persists_the_new_subscriber() {
     assert_eq!(saved.status, "pending_confirmation");
 }
 
-
 #[tokio::test]
 async fn subscribe_returns_a_400_when_data_is_missing() {
     let app = spawn_app().await;
     let test_case = vec![
         ("name=le%20guin", "missing the email"),
         ("email=ursula_le_guin%40gmail.com", "missing the name"),
-        ("", "missing both name and email")
+        ("", "missing both name and email"),
     ];
 
     for (invalid_body, error_message) in test_case {
@@ -69,7 +68,7 @@ async fn subscribe_returns_a_400_when_fields_are_present_but_empty() {
             response.status().as_u16(),
             "The API did not return a 400 Bad Request  when the payload was {}.",
             description
-            );
+        );
     }
 }
 
@@ -91,10 +90,9 @@ async fn subscribe_sends_a_confirmation_email_with_a_link() {
     assert_eq!(confirmation_links.html, confirmation_links.plain_text);
 }
 
-
 #[tokio::test]
-async fn  subscribe_sends_a_confirmation_email_for_valid_data() {
-   let app = spawn_app().await;
+async fn subscribe_sends_a_confirmation_email_for_valid_data() {
+    let app = spawn_app().await;
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
 
     Mock::given(path("/email"))
@@ -106,11 +104,10 @@ async fn  subscribe_sends_a_confirmation_email_for_valid_data() {
     app.post_subscriptions(body.into()).await;
 }
 
-
 #[tokio::test]
 async fn subscribe_fails_if_there_is_a_fatal_database_error() {
     let app = spawn_app().await;
-    let body =  "name=le%20guin&email=ursula_le_guin%40gmail.com";
+    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
     sqlx::query!("ALTER TABLE subscriptions DROP COLUMN email;",)
         .execute(&app.db_pool)
         .await
@@ -118,3 +115,4 @@ async fn subscribe_fails_if_there_is_a_fatal_database_error() {
     let response = app.post_subscriptions(body.into()).await;
     assert_eq!(response.status().as_u16(), 500);
 }
+
