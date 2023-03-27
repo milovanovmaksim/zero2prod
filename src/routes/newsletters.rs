@@ -6,6 +6,7 @@ use actix_web::{
     web, HttpResponse, ResponseError,
 };
 use anyhow::Context;
+use argon2::{Algorithm, Argon2, Params, PasswordHash, PasswordVerifier, Version};
 use secrecy::ExposeSecret;
 use secrecy::Secret;
 use sha3::Digest;
@@ -78,25 +79,43 @@ async fn validate_credentials(
     credentials: Credentials,
     pool: &PgPool,
 ) -> Result<uuid::Uuid, PublishError> {
-    let password_hash = sha3::Sha3_256::digest(credentials.password.expose_secret().as_bytes());
-    let password_hash = format!("{:x}", password_hash);
-    let user_id: Option<_> = sqlx::query!(
+    let hasher = Argon2::new(
+        Algorithm::Argon2id,
+        Version::V0x13,
+        Params::new(15000, 2, 1, None).map_err(|_| {
+            PublishError::UnexpectedError(anyhow::anyhow!("Failed to build Argon2 parameters"))
+        })?,
+    );
+    let row: Option<_> = sqlx::query!(
         r#"
-            SELECT user_id
-            FROM users
-            WHERE username = $1 AND password_hash = $2
+        SELECT user_id, password_hash, salt
+        FROM users
+        WHERE username = $1
         "#,
-        credentials.username,
-        password_hash
+        credentials.username
     )
     .fetch_optional(pool)
     .await
-    .context("Failed to perform a query to validate auth credentials.")
+    .context("Failed to perform a query to retrieve stroed credentials")
     .map_err(PublishError::UnexpectedError)?;
-    user_id
-        .map(|row| row.user_id)
-        .ok_or_else(|| anyhow::anyhow!("Invalid usrname or password."))
-        .map_err(PublishError::AuthError)
+    let (expected_password_hash, user_id, salt) = match row {
+        Some(row) => (row.password_hash, row.user_id, row.salt),
+        None => {
+            return Err(PublishError::AuthError(anyhow::anyhow!("Unknown username")));
+        }
+    };
+    let expected_password_hash = PasswordHash::new(&expected_password_hash).map_err(|_| {
+        PublishError::UnexpectedError(anyhow::anyhow!(
+            "Failed to parse hash in PHC string format."
+        ))
+    })?;
+    Argon2::default()
+        .verify_password(
+            credentials.password.expose_secret().as_bytes(),
+            &expected_password_hash,
+        )
+        .map_err(|_| PublishError::AuthError(anyhow::anyhow!("Invalid password")))?;
+    Ok(user_id)
 }
 
 fn basic_authentication(headers: &HeaderMap) -> Result<Credentials, anyhow::Error> {
