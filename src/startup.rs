@@ -1,13 +1,12 @@
-use std::net::TcpListener;
-use actix_web::{dev::Server, HttpServer, App, web};
-use sqlx::PgPool;
+use actix_web::{dev::Server, web, App, HttpServer};
 use sqlx::postgres::PgPoolOptions;
+use sqlx::PgPool;
+use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 
-use crate::configuration::{Settings, DatabaseSettings};
-use crate::routes::{health_check, subscribe, confirm, publish_newsletter};
+use crate::configuration::{DatabaseSettings, Settings};
 use crate::email_client::EmailClient;
-
+use crate::routes::{confirm, health_check, home, publish_newsletter, subscribe};
 
 pub struct Application {
     port: u16,
@@ -17,20 +16,30 @@ pub struct Application {
 impl Application {
     pub async fn build(configuration: Settings) -> Result<Self, std::io::Error> {
         let connection_pool = get_connection_pool(&configuration.database);
-        let sender_email = configuration.email_client.sender()
+        let sender_email = configuration
+            .email_client
+            .sender()
             .expect("Invalid sender email address.");
         let timeout = configuration.email_client.timeout();
         let email_client = EmailClient::new(
             configuration.email_client.base_url,
             sender_email,
             configuration.email_client.authorization_token,
-            timeout);
-        let address = format!("{}:{}", configuration.application.host, configuration.application.port);
+            timeout,
+        );
+        let address = format!(
+            "{}:{}",
+            configuration.application.host, configuration.application.port
+        );
         let listener = TcpListener::bind(address)?;
         let port = listener.local_addr().unwrap().port();
-        let server = run(listener, connection_pool,
-            email_client, configuration.application.base_url)?;
-        Ok(Self{ port, server })
+        let server = run(
+            listener,
+            connection_pool,
+            email_client,
+            configuration.application.base_url,
+        )?;
+        Ok(Self { port, server })
     }
 
     pub fn port(&self) -> u16 {
@@ -44,15 +53,16 @@ impl Application {
 
 pub struct ApplicationBaseUrl(pub String);
 
-
 pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
-    PgPoolOptions::new()
-        .connect_lazy_with(configuration.with_db())
+    PgPoolOptions::new().connect_lazy_with(configuration.with_db())
 }
 
-pub fn run(listener: TcpListener,
+pub fn run(
+    listener: TcpListener,
     db_pool: PgPool,
-    email_client: EmailClient, base_url: String) -> Result<Server, std::io::Error> {
+    email_client: EmailClient,
+    base_url: String,
+) -> Result<Server, std::io::Error> {
     let db_pool = web::Data::new(db_pool);
     let email_client = web::Data::new(email_client);
     let base_url = web::Data::new(ApplicationBaseUrl(base_url));
@@ -63,6 +73,7 @@ pub fn run(listener: TcpListener,
             .route("/subscriptions", web::post().to(subscribe))
             .route("/subscriptions/confirm", web::get().to(confirm))
             .route("/newsletters", web::post().to(publish_newsletter))
+            .route("/", web::get().to(home))
             .app_data(db_pool.clone())
             .app_data(email_client.clone())
             .app_data(base_url.clone())
@@ -71,3 +82,4 @@ pub fn run(listener: TcpListener,
     .run();
     Ok(server)
 }
+
