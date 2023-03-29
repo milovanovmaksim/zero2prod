@@ -1,5 +1,3 @@
-use actix_web::HttpResponse;
+mod get;
 
-pub async fn login_form() -> HttpResponse {
-    HttpResponse::Ok().finish()
-}
+pub use get::login_form;
