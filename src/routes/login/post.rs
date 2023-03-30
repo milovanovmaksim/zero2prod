@@ -57,9 +57,12 @@ impl std::fmt::Debug for LoginError {
 
 impl ResponseError for LoginError {
     fn status_code(&self) -> StatusCode {
-        match self {
-            LoginError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            LoginError::AuthError(_) => StatusCode::UNAUTHORIZED,
-        }
+        StatusCode::SEE_OTHER
+    }
+
+    fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
+        HttpResponse::build(self.status_code())
+            .insert_header((LOCATION, "/login"))
+            .finish()
     }
 }
