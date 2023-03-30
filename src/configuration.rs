@@ -1,30 +1,26 @@
-use secrecy::Secret;
 use secrecy::ExposeSecret;
+use secrecy::Secret;
 use serde_aux::field_attributes::deserialize_number_from_string;
-use sqlx::ConnectOptions;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::postgres::PgSslMode;
+use sqlx::ConnectOptions;
 
 use crate::domain::SubscriberEmail;
-
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
     pub database: DatabaseSettings,
     pub application: ApplicationSettings,
-    pub email_client: EmailClientSettings
-
+    pub email_client: EmailClientSettings,
 }
-
 
 #[derive(serde::Deserialize, Clone)]
 pub struct EmailClientSettings {
     pub base_url: String,
     pub sender_email: String,
     pub authorization_token: Secret<String>,
-    pub timeout_milliseconds: u64
+    pub timeout_milliseconds: u64,
 }
-
 
 impl EmailClientSettings {
     pub fn sender(&self) -> Result<SubscriberEmail, String> {
@@ -36,13 +32,12 @@ impl EmailClientSettings {
     }
 }
 
-
 #[derive(serde::Deserialize, Clone)]
 pub struct ApplicationSettings {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
     pub host: String,
-    pub base_url: String
+    pub base_url: String,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -66,7 +61,7 @@ impl DatabaseSettings {
         PgConnectOptions::new()
             .host(&self.host)
             .username(&self.username)
-            .password(&self.password.expose_secret())
+            .password(self.password.expose_secret())
             .port(self.port)
             .ssl_mode(ssl_mode)
     }
@@ -77,7 +72,6 @@ impl DatabaseSettings {
         options
     }
 }
-
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     let base_path = std::env::current_dir().expect("Failed to determine the current directory");
@@ -90,23 +84,25 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
 
     let config = config::Config::builder()
         .add_source(config::File::from(base))
-        .add_source(config::File::from(configuration_directory.join(enviroment.as_str())))
+        .add_source(config::File::from(
+            configuration_directory.join(enviroment.as_str()),
+        ))
         .add_source(config::Environment::with_prefix("app").separator("__"))
-        .build().unwrap();
+        .build()
+        .unwrap();
     config.try_deserialize()
 }
 
-
 pub enum Enviroment {
     Local,
-    Production
+    Production,
 }
 
 impl Enviroment {
     pub fn as_str(&self) -> &'static str {
         match self {
             Enviroment::Local => "local",
-            Enviroment::Production=> "production"
+            Enviroment::Production => "production",
         }
     }
 }
@@ -119,8 +115,8 @@ impl TryFrom<String> for Enviroment {
             "production" => Ok(Self::Production),
             other => Err(format!(
                 "{} is not a supported environment. Use either `local` or `production`.",
-                other))
+                other
+            )),
         }
     }
-
 }
