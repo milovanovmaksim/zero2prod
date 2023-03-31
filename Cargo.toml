@@ -42,6 +42,7 @@ urlencoding = "2.1.2"
 forgiving-htmlescape = "0.1.0"
 hmac = {version = "0.12.1", features = ["std"]}
 sha2 = "0.10.6"
+hex = "0.4.3"
 
 
 
