@@ -16,7 +16,6 @@ name = "zero2prod"
 [dependencies]
 actix-web = "4.3.1"
 tokio = { version = "1.26.0", features = ["macros", "rt-multi-thread"] }
-reqwest =  { version = "0.11.6", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1.0.155", features = ["derive"]}
 uuid = { version = "1.3.0", features = ["v4"] }
 chrono = "0.4.15"
@@ -43,6 +42,7 @@ forgiving-htmlescape = "0.1.0"
 hmac = {version = "0.12.1", features = ["std"]}
 sha2 = "0.10.6"
 hex = "0.4.3"
+actix-web-flash-messages = { version = "0.3", features = ["cookies"] }
 
 
 
@@ -65,3 +65,8 @@ features = [
     "migrate",
     "offline",
 ]
+
+[dependencies.reqwest]
+version = "0.11.6"
+default-features = false
+features = ["json", "rustls-tls", "cookies"]

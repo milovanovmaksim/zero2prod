@@ -1,16 +1,15 @@
 use crate::routes::error_chain_fmt;
-use crate::startup::HmacSecret;
 use actix_web::error::InternalError;
 use actix_web::http::header::LOCATION;
 use actix_web::web;
 use actix_web::HttpResponse;
-use secrecy::{ExposeSecret, Secret};
+use actix_web_flash_messages::FlashMessage;
+use secrecy::Secret;
 use sqlx::PgPool;
 
 use crate::authentication::validate_credentials;
 use crate::authentication::AuthError;
 use crate::authentication::Credentials;
-use hmac::{Hmac, Mac};
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
@@ -43,6 +42,7 @@ pub async fn login(
                 AuthError::InvalidCredentials(_) => LoginError::AuthError(e.into()),
                 AuthError::UnexpectedError(_) => LoginError::UnexpectedError(e.into()),
             };
+            FlashMessage::error(e.to_string()).send();
             let response = HttpResponse::SeeOther()
                 .insert_header((LOCATION, "/login"))
                 .finish();
