@@ -43,6 +43,7 @@ hmac = {version = "0.12.1", features = ["std"]}
 sha2 = "0.10.6"
 hex = "0.4.3"
 actix-web-flash-messages = { version = "0.3", features = ["cookies"] }
+actix-session = { version = "0.7.2", features = ["redis-rs-session", "redis-rs-tls-session"] }
 
 
 
