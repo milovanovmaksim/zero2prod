@@ -4,6 +4,7 @@ use actix_session::{Session, SessionExt, SessionGetError, SessionInsertError};
 use actix_web::{dev::Payload, FromRequest, HttpRequest};
 use uuid::Uuid;
 
+#[derive(Clone)]
 pub struct TypedSession(Session);
 
 impl TypedSession {
@@ -19,6 +20,10 @@ impl TypedSession {
 
     pub fn get_user_id(&self) -> Result<Option<Uuid>, SessionGetError> {
         self.0.get(Self::USER_ID_KEY)
+    }
+
+    pub fn log_out(self) {
+        self.0.purge()
     }
 }
 

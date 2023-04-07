@@ -4,15 +4,14 @@ use actix_web_flash_messages::IncomingFlashMessages;
 use std::fmt::Write;
 
 use crate::session_state::TypedSession;
-use crate::utils::{e500, see_other};
+
+use super::reject_anonymous;
 
 pub async fn change_password_form(
     session: TypedSession,
     flash_message: IncomingFlashMessages,
 ) -> Result<HttpResponse, actix_web::Error> {
-    if session.get_user_id().map_err(e500)?.is_none() {
-        return Ok(see_other("/login"));
-    };
+    let _user_id = reject_anonymous(session).await?;
     let mut msg_html = String::new();
     for m in flash_message.iter() {
         writeln!(msg_html, "<p><i>{}</i></p>", m.content()).unwrap();
