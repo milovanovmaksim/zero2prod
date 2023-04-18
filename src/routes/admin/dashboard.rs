@@ -1,7 +1,6 @@
 use actix_web::http::header::ContentType;
 use actix_web::{web, HttpResponse};
 use anyhow::Context;
-use reqwest::header::LOCATION;
 use sqlx::PgPool;
 use uuid::Uuid;
 
