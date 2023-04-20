@@ -5,7 +5,7 @@ CREATE TYPE header_pair AS (
     value BYTEA
 );
 
-CREATE TABLE indempotency (
+CREATE TABLE idempotency (
     user_id uuid NOT NULL REFERENCES users(user_id),
     idempotency_key TEXT NOT NULL,
     response_status_code SMALLINT NOT NULL,
