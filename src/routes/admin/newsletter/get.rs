@@ -7,7 +7,7 @@ pub async fn publish_newsletter_form(
 ) -> Result<HttpResponse, actix_web::Error> {
     let mut msg_html = String::new();
     for m in flash_message.iter() {
-        writeln!(msg_html, "</p><i>{}</i></p>", m.content()).unwrap();
+        writeln!(msg_html, "<p><i>{}</i></p>", m.content()).unwrap();
     }
 
     Ok(HttpResponse::Ok()

@@ -26,7 +26,7 @@ pub async fn admin_dashboard(
     </head>
     <body>
         <p>Welcome {username}!</p>
-        <p>Available actions:</p>  
+        <p>Available actions:</p>
         <ol>
             <li><a href="/admin/password">Change password</a></li>
             <li>
@@ -34,7 +34,7 @@ pub async fn admin_dashboard(
                     <input type="submit" value="Logout">
                 </form>
             </li>
-        </ol>  
+        </ol>
     </body>
 </html>"#
         )))
