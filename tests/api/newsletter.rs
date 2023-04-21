@@ -159,3 +159,20 @@ async fn newsletter_creation_is_idempotent() {
     let html_page = app.get_publish_newsletter_html().await;
     assert!(html_page.contains("<p><i>The newsletter issue has been published!</i></p>"));
 }
+
+#[tokio::test]
+async fn concurrent_form_submission_is_handled_gracefully() {
+    // Arange
+    let app = spawn_app().await;
+    create_confirmed_subscriber(&app).await;
+    app.test_user.login(&app).await;
+
+    Mock::given(path("/email"))
+        // Setting a long delay to ensure that the second request
+        // arrives before the first one completes
+        .and(method("POST"))
+        .response_with(ResponseTemplate::new(200).set_delay(Duration::from_secs(2)))
+        .expect(1)
+        .mount(&app.email_server)
+        .await
+}
