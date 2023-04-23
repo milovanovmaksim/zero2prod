@@ -49,7 +49,7 @@ pub async fn publish_newsletter_form(
             ></textarea>
         </label>
         <br>
-        <input hidden type="text" name="idempotency_key" value="{idempotency_key}">
+        <input type="text" name="idempotency_key" value="{idempotency_key}">
         <button type="submit">Publish</button>
     </form>
     <p><a href="/admin/dashboard">&lt;- Back</a></p>
